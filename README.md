@@ -11,6 +11,12 @@ Codex Token Saver is a drop-in safe wrapper for Codex CLI. It accepts prompts in
 
 The official `codex` binary stays untouched and updateable. You run `codex-ts` when you want token-saving translation, and keep `codex` exactly as it is.
 
+```bash
+curl -fsSL https://raw.githubusercontent.com/lyymuwu/codex-token-saver/main/scripts/bootstrap.sh | bash
+```
+
+![Terminal demo](docs/demo.gif)
+
 ## Why It Exists
 
 Many tokenizers spend more tokens on Chinese, Japanese, Thai, Hindi, Arabic, and other non-English prompts than on equivalent English prompts. Codex Token Saver tries to move the expensive part of the workflow into English while preserving the user experience in your own language.
@@ -26,8 +32,19 @@ It is not magic: hidden reasoning tokens remain invisible to the wrapper, and re
 - **Uses your Codex login by default**: translation runs through `codex exec -m gpt-5.4-mini`, so no separate API key is required.
 - **OpenAI-compatible mode**: switch to `provider = "openai"` for `gpt-5-nano`, `gpt-4.1-nano`, `gpt-4o-mini`, or another compatible endpoint.
 - **Safe install and uninstall**: every managed path is recorded in an install manifest and removed conservatively.
+- **Benchmark included**: see [docs/benchmark.md](docs/benchmark.md) for visible-token estimates across languages.
 
 ## Quick Start
+
+Fast path:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lyymuwu/codex-token-saver/main/scripts/bootstrap.sh | bash
+source ~/.zshrc
+codex-ts doctor
+```
+
+Safer inspect-first path:
 
 ```bash
 git clone https://github.com/lyymuwu/codex-token-saver.git
@@ -43,6 +60,12 @@ If you want `codex` itself to mean `codex-ts`, opt in explicitly:
 
 ```bash
 ./scripts/install.sh --alias
+```
+
+For the one-line installer with alias:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lyymuwu/codex-token-saver/main/scripts/bootstrap.sh | bash -s -- --alias
 ```
 
 ## Examples
@@ -150,6 +173,18 @@ This estimate only covers the visible prompt. It cannot measure hidden reasoning
 python3 -m unittest discover -s tests
 ```
 
+See the full benchmark page: [docs/benchmark.md](docs/benchmark.md).
+
+Snapshot:
+
+| Language | Original visible tokens | English visible tokens | Estimated saving |
+|---|---:|---:|---:|
+| Chinese | 35 | 24 | 31.4% |
+| Japanese | 49 | 24 | 51.0% |
+| Thai | 89 | 24 | 73.0% |
+| Hindi | 93 | 24 | 74.2% |
+| Arabic | 70 | 24 | 65.7% |
+
 ## Safe Uninstall
 
 Preview first:
@@ -188,11 +223,32 @@ Logs redact secrets and store operational metadata only by default: token estima
 - If translation, detection, quota, or network calls fail, the wrapper warns and falls back to raw Codex.
 - Token savings are heuristic; actual billing depends on Codex internals.
 
+## Roadmap
+
+- [ ] Homebrew install.
+- [ ] Tokenizer-specific benchmark reports.
+- [ ] Translation cache for repeated prompts.
+- [ ] Better interactive TUI final-answer handling.
+- [ ] Release benchmark snapshots.
+- [ ] Explore wrappers for other AI coding CLIs.
+
+## FAQ
+
+**Does this replace Codex?**  
+No. `codex-ts` finds and runs the real `codex` binary. The official Codex CLI remains untouched.
+
+**Does this guarantee lower bills?**  
+No. It can reduce visible prompt tokens for many non-English prompts, but hidden reasoning tokens and backend billing details are outside the wrapper.
+
+**Is `curl | bash` safe?**  
+It is convenient, not magic. The recommended security path is to clone the repo, inspect `scripts/install.sh`, and then run it locally.
+
 ## Development
 
 ```bash
 python3 -m unittest discover -s tests
 shellcheck scripts/*.sh scripts/codex-ts
+python3 scripts/benchmark_visible_tokens.py
 ```
 
 Release artifacts should include repository files only. Never bundle local config, logs, tokens, `.env` files, or `install-manifest.json`.
